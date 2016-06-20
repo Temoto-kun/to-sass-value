@@ -1,0 +1,35 @@
+{
+  "name": "to-sass-value",
+  "version": "0.0.1",
+  "description": "Converts a JavaScript value to its corresponding Sass value for use in https://github.com/sass/node-sass.",
+  "main": "index.js",
+  "scripts": {
+    "build": "gulp build",
+    "test": "gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Temoto-kun/to-sass-value.git"
+  },
+  "keywords": [
+    "Sass",
+    "node-sass"
+  ],
+  "author": "Temoto-kun <kiiroifuriku@hotmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Temoto-kun/to-sass-value/issues"
+  },
+  "homepage": "https://github.com/Temoto-kun/to-sass-value#readme",
+  "eslintConfig": {
+    "extends": "eslint:recommended"
+  },
+  "dependencies": {
+    "node-sass": "^3.8.0"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-jasmine": "^2.4.0",
+    "gulp-load-plugins": "^1.2.4"
+  }
+}
