@@ -25,7 +25,8 @@
     "extends": "eslint:recommended"
   },
   "dependencies": {
-    "node-sass": "^3.8.0"
+    "node-sass": "^3.8.0",
+    "parse-color": "^1.0.0"
   },
   "devDependencies": {
     "gulp": "^3.9.1",
