@@ -1,64 +1,95 @@
 ﻿/**
  * to-sass-value
- * 
- * Author: Temoto-kun <kiiroifuriku@hotmail.com>
+ * Converts a JavaScript value to its corresponding Sass value.
+ *
+ * Author: TheoryOfNekomata <allan.crisostomo@outlook.com>
  * License: MIT
  */
 
 (function () {
-    // ReSharper disable once InconsistentNaming
-    var SassTypes = require('node-sass').types,
-        colorFormats = require('./color-formats'),
+    var sass = require('node-sass'),
+        parseColor = require('parse-color'),
         booleanStrings = require('./booleans'),
-        // ReSharper disable once DuplicatingLocalDeclaration
-        parseValue;
 
-    // TODO use a color parsing library!
+        // ReSharper disable once DuplicatingLocalDeclaration
+        toSassValue,
+
+        // ReSharper disable once InconsistentNaming
+        SassBoolean = sass.types.Boolean,
+        SassString = sass.types.String,
+        SassNumber = sass.types.Number,
+        SassColor = sass.types.Color,
+        SassList = sass.types.List,
+        SassMap = sass.types.Map,
+        SassNull = sass.types.Null;
 
     /**
-     * Parses a JavaScript value to a Sass color.
-     * @param {*} jsValue A JavaScript value.
-     * @returns {SassColor|null} A Sass color, or null if jsValue cannot be parsed as a color.
+     * Parses a color string.
+     * @param colorString A color string
+     * @returns {Array|undefined} The RGB(A) color channels, or undefined if the string cannot be parsed as a color.
      */
-    function parseColor(jsValue) {
-        var values,
-            sassColor = null;
+    function parseColorString(colorString) {
+        var parsedColorValues = parseColor(colorString);
 
-        colorFormats.forEach(function (pattern, i) {
-            if (!pattern.test(jsValue)) {
-                return null;
-            }
-
-            switch (i) {
-                // TODO better determine which color format is recognized (use strings instead of indexes for color-formats)
-                case 0:
-                case 1:
-                    values = jsValue.slice(jsValue.indexOf('(') + 1, jsValue.lastIndexOf(')')).split(',').map(function (value) {
-                        return parseInt(value.trim());
-                    });
-
-                    return sassColor = new SassTypes.Color(parseInt(values[0]), parseInt(values[1]), parseInt(values[2]), parseFloat(values[3]) || 1.0);
-                case 2:
-                    return sassColor = new SassTypes.Color(parseInt(jsValue.slice(jsValue.indexOf('#') + 1)) | 0xFF000000);
-                default:
-                    break;
-            }
-            return null;
-        });
-
-        return sassColor;
+        return parsedColorValues.rgba || parsedColorValues.rgb;
     }
 
     /**
-     * Parses a JavaScript value to a Sass number.
+     * Converts a JavaScript value to a Sass color.
+     * @param {*} jsValue A JavaScript value.
+     * @returns {SassColor|null} A Sass color, or null if jsValue cannot be parsed as a color.
+     */
+    function toSassColor(jsValue) {
+        var values;
+
+        switch (typeof jsValue) {
+            case 'string':
+                values = parseColorString(jsValue);
+
+                if (!values) {
+                    return null;
+                }
+                break;
+            case 'object':
+                values = [ jsValue.r, jsValue.g, jsValue.b, jsValue.a ];
+                break;
+            default:
+                return null;
+        }
+
+        if (isNaN(values[3])) {
+            values[3] = 1.0;
+        }
+
+        return new SassColor(values[0], values[1], values[2]);
+    }
+
+    /**
+     * Determines if a unit is valid in CSS.
+     * @param {String} unit A unit string.
+     * @returns {Boolean} Is unit valid?
+     */
+    function isValidUnit(unit) {
+        return ['%', 'cm', 'em', 'ex', 'in', 'mm', 'pc', 'pt', 'px', 'vh', 'vw', 'vmin', 'vmax', 'ch', 'rem']
+                .indexOf(unit) > -1;
+    }
+
+    /**
+     * Converts a JavaScript value to a Sass number.
      * @param {*} jsValue A JavaScript value.
      * @returns {SassNumber|null} A Sass number, or null if jsValue cannot be parsed as a number.
      */
-    function parseNumber(jsValue) {
+    function toSassNumber(jsValue) {
         var numValue = parseFloat(jsValue),
             strNum,
             unit = '';
 
+        if (typeof jsValue === 'object') {
+            numValue = jsValue.value;
+            unit = jsValue.unit;
+        }
+
+        // This 'number' cannot be parsed.
         if (isNaN(numValue) || numValue === Infinity || numValue === -Infinity) {
             // Let them be dealt with another method
             return null;
@@ -70,7 +101,8 @@
             unit = jsValue.slice(strNum.length);
         }
 
-        return new SassTypes.Number(numValue, unit);
+        // Strip unrecognized units.
+        return new SassNumber(numValue, isValidUnit(unit) ? unit : '');
     }
 
     /**
@@ -106,27 +138,22 @@
     }
 
     /**
-     * Parses a JavaScript value to a Sass Boolean.
-     * @param {String} jsValue A JavaScript value.
+     * Converts a JavaScript value to a Sass Boolean.
+     * @param {*} jsValue A JavaScript value.
      * @returns {SassBoolean|null} A Sass Boolean value, or null if jsValue doesn't seem like a Boolean value.
      */
-    function parseBoolean(jsValue) {
+    function toSassBoolean(jsValue) {
         switch (typeof jsValue) {
             case 'boolean':
-                return jsValue ? SassTypes.Boolean.TRUE : SassTypes.Boolean.FALSE;
+                return jsValue ? SassBoolean.TRUE : SassBoolean.FALSE;
             case 'string':
                 if (isTruthy(jsValue)) {
-                    return SassTypes.Boolean.TRUE;
-                }
-                
-                if (isFalsey(jsValue)) {
-                    return SassTypes.Boolean.FALSE;
+                    return SassBoolean.TRUE;
                 }
 
-                return null;
+                return isFalsey(jsValue) ? SassBoolean.FALSE : null;
 
             // We will not convert numbers.
-
             default:
                 break;
         }
@@ -135,80 +162,85 @@
     }
 
     /**
-     * Parses a JavaScript value to a Sass string.
+     * Converts a JavaScript value to a Sass string.
      * @param {*} jsValue A JavaScript value.
-     * @returns {SassColor|SassNumber|SassBoolean|SassString} Appropriate Sass value if it is a valid color or number format, else a Sass string.
+     * @returns {SassColor|SassNumber|SassBoolean|SassString} Appropriate Sass value if it is a valid color or number
+     *          format, else a Sass string.
      */
-    function parseString(jsValue) {
-        var value = parseColor(jsValue) || parseNumber(jsValue) || parseBoolean(jsValue);
+    function toSassString(jsValue) {
+        var value = toSassColor(jsValue) ||
+            toSassNumber(jsValue) ||
+            toSassBoolean(jsValue);
 
         if (value === null) {
-            return new SassTypes.String('' + jsValue);
+            return new SassString('' + jsValue);
         }
 
         return value;
     }
 
     /**
-     * Parses a JavaScript value as a Sass map.
+     * Converts a JavaScript value as a Sass map.
      * @param {Object} jsValue A JavaScript value.
-     * @returns {SassMap} A Sass map.
+     * @returns {SassColor|SassNumber|SassMap} A Sass map, or a color/number if it can be parsed.
      */
-    function parseMap(jsValue) {
-        // TODO parse color-like objects (e.g. {r:Number,g:Number,b:Number}), number-like objects (e.g. {value:Number,unit:String})
-
+    function toSassMap(jsValue) {
         var keys = Object.keys(jsValue),
-            sassMap = new SassTypes.Map(keys.length);
+            colorValue = toSassColor(jsValue) || toSassNumber(jsValue),
+            sassMap = new SassMap(keys.length);
+
+        if (!!colorValue) {
+            return colorValue;
+        }
 
         keys.forEach(function (key, i) {
-            sassMap.setKey(i, new SassTypes.String(key));
-            sassMap.setValue(i, parseValue(jsValue[key]));
+            sassMap.setKey(i, new SassString(key));
+            sassMap.setValue(i, toSassValue(jsValue[key]));
         });
 
         return sassMap;
     }
 
     /**
-     * Parses a JavaScript value as a Sass list.
+     * Converts a JavaScript value as a Sass list.
      * @param {Array} jsValue A JavaScript value.
      * @returns {SassList} A Sass list.
      */
-    function parseList(jsValue) {
-        var sassList = new SassTypes.List(jsValue.length, true);
+    function toSassList(jsValue) {
+        var sassList = new SassList(jsValue.length, true);
 
         jsValue.forEach(function (item, i) {
-            sassList.setValue(i, parseValue(item));
+            sassList.setValue(i, toSassValue(item));
         });
 
         return sassList;
     }
 
     /**
-     * Parses a JavaScript value.
-     * @param {*} jsValue A JavaScript value. 
+     * Converts a JavaScript value to its corresponding Sass value.
+     * @param {*} jsValue A JavaScript value.
      * @returns {SassNull|SassNumber|SassColor|SassBoolean|SassString|SassList|SassMap} Corresponding Sass value.
      */
     // ReSharper disable once DuplicatingLocalDeclaration
-    parseValue = function parseValue(jsValue) {
+    module.exports = toSassValue = function toSassValue(jsValue) {
         if (jsValue === null || jsValue === undefined) {
-            return SassTypes.Null.NULL;
+            return SassNull.NULL;
         }
 
         switch (typeof jsValue) {
             case 'number':
             case 'string':
             case 'boolean':
-                return parseString(jsValue);
+                // For meticulous validation, use the string converter.
+                return toSassString(jsValue);
             default:
                 break;
         }
 
         if (jsValue instanceof Array) {
-            return parseList(jsValue);
+            return toSassList(jsValue);
         }
 
-        return parseMap(jsValue);
+        return toSassMap(jsValue);
     };
-
-    module.exports = parseValue;
 })();

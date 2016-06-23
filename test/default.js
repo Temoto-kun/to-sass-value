@@ -30,7 +30,7 @@
                 var jsTrue1 = 'true',
                     jsFalse1 = 'false',
                     jsTrue2 = 'yes',
-                    jsFalse2 = 'no'
+                    jsFalse2 = 'no',
 
                     sassTrue1 = toSassValue(jsTrue1),
                     sassFalse1 = toSassValue(jsFalse1),
@@ -152,7 +152,7 @@
                     expect(sassPositiveInfinity instanceof SassString).toBe(true);
                     expect(sassNegativeInfinity instanceof SassString).toBe(true);
                     expect(sassNaN instanceof SassString).toBe(true);
-                    
+
                     expect(sassPositiveInfinity.getValue()).toBe('Infinity');
                     expect(sassNegativeInfinity.getValue()).toBe('-Infinity');
                     expect(sassNaN.getValue()).toBe('NaN');
@@ -166,7 +166,7 @@
                     expect(sassPositiveInfinity instanceof SassString).toBe(true);
                     expect(sassNegativeInfinity instanceof SassString).toBe(true);
                     expect(sassNaN instanceof SassString).toBe(true);
-                    
+
                     expect(sassPositiveInfinity.getValue()).toBe('Infinity');
                     expect(sassNegativeInfinity.getValue()).toBe('-Infinity');
                     expect(sassNaN.getValue()).toBe('NaN');
