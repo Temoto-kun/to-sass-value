@@ -34,6 +34,24 @@
         return parsedColorValues.rgba || parsedColorValues.rgb;
     }
 
+    function isValidColorValues(red, green, blue, alpha) {
+        const maxChannel = 255,
+            maxAlpha = 1.0,
+            minChannel = 0,
+            minAlpha = 0.0,
+
+            isAboveMax = (red > maxChannel ||
+                green > maxChannel ||
+                blue > maxChannel ||
+                alpha > maxAlpha),
+            isBelowMin = (red < minChannel ||
+                green < minChannel ||
+                blue < minChannel ||
+                alpha < minAlpha);
+
+        return !(isAboveMax || isBelowMin);
+    }
+
     /**
      * Converts a JavaScript value to a Sass color.
      * @param {*} jsValue A JavaScript value.
@@ -44,7 +62,7 @@
 
         switch (typeof jsValue) {
             case 'string':
-                values = parseColorString(jsValue);
+                values = parseColorString(jsValue.trim().toLowerCase());
 
                 if (!values) {
                     return null;
@@ -61,7 +79,11 @@
             values[3] = 1.0;
         }
 
-        return new SassColor(values[0], values[1], values[2]);
+        if (!isValidColorValues.apply(null, values)) {
+            return null;
+        }
+
+        return new SassColor(values[0], values[1], values[2], values[3]);
     }
 
     /**
@@ -235,6 +257,10 @@
                 return toSassString(jsValue);
             default:
                 break;
+        }
+
+        if ("" + jsValue === '[object Arguments]') {
+            jsValue = Array.from(jsValue);
         }
 
         if (jsValue instanceof Array) {

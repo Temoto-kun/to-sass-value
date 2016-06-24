@@ -12,7 +12,7 @@
 
     describe('to-sass-value', function () {
         describe('upon converting Boolean values', function () {
-            it('should be able to convert Boolean values', function () {
+            it('should be able to convert simple Boolean values', function () {
                 var jsTrue = true,
                     jsFalse = false,
 
@@ -70,7 +70,7 @@
         });
 
         describe('upon converting strings', function () {
-            it('should be able to convert String values', function () {
+            it('should be able to convert ordinary String values', function () {
                 var jsValue1 = 'string',
                     sassValue1 = toSassValue(jsValue1),
                     jsValue2 = 'my_name_is_mud',
@@ -111,11 +111,8 @@
             });
 
             it('should be able to convert numbers represented as String', function () {
-                var jsValue3 = "69",
-                    jsValue4 = "420.1337",
-
-                    sassValue3 = toSassValue(jsValue3);
-                    sassValue4 = toSassValue(jsValue4);
+                var sassValue3 = toSassValue('69'),
+                    sassValue4 = toSassValue('420.1337');
 
                 expect(sassValue3 instanceof SassNumber).toBe(true);
                 expect(sassValue4 instanceof SassNumber).toBe(true);
@@ -126,11 +123,8 @@
             });
 
             it('should be able to convert numbers with units', function () {
-                var jsValue5 = "69em",
-                    jsValue6 = "420.1337px",
-
-                    sassValue5 = toSassValue(jsValue5),
-                    sassValue6 = toSassValue(jsValue6);
+                var sassValue5 = toSassValue('69em'),
+                    sassValue6 = toSassValue('420.1337px');
 
                 expect(sassValue5 instanceof SassNumber).toBe(true);
                 expect(sassValue6 instanceof SassNumber).toBe(true);
@@ -174,8 +168,70 @@
             });
         });
 
+        describe('upon converting colors', function () {
+            it('should be able to convert colors in hexadecimal format', function () {
+                var sassValue1 = toSassValue('#c0ffee'),
+                    sassValue2 = toSassValue('#beefed'),
+                    sassValue3 = toSassValue('#ecchi'),
+                    sassValue4 = toSassValue('#708090');
+
+                expect(sassValue1 instanceof SassColor).toBe(true);
+                expect(sassValue1.getR()).toBe(0xc0);
+                expect(sassValue1.getG()).toBe(0xff);
+                expect(sassValue1.getB()).toBe(0xee);
+
+                expect(sassValue2 instanceof SassColor).toBe(true);
+                expect(sassValue2.getR()).toBe(0xbe);
+                expect(sassValue2.getG()).toBe(0xef);
+                expect(sassValue2.getB()).toBe(0xed);
+
+                expect(sassValue3 instanceof SassColor).not.toBe(true);
+
+                expect(sassValue4 instanceof SassColor).toBe(true);
+                expect(sassValue4.getR()).not.toBe(70);
+                expect(sassValue4.getG()).not.toBe(80);
+                expect(sassValue4.getB()).not.toBe(90);
+            });
+
+            it('should be able to convert colors in rgb() format', function () {
+                var sassValue1 = toSassValue('RGB(96, 33, 122)'),
+                    sassValue2 = toSassValue('RGB    (1, 2, 3)'),
+                    sassValue3 = toSassValue('RGB(9001, 131072, 128)');
+
+                expect(sassValue1 instanceof SassColor).toBe(true);
+                expect(sassValue1.getR()).toBe(96);
+                expect(sassValue1.getG()).toBe(33);
+                expect(sassValue1.getB()).toBe(122);
+                expect(sassValue1.getA()).toBeCloseTo(1.0, 0.0);
+
+                expect(sassValue2 instanceof SassColor).toBe(true);
+                expect(sassValue2.getR()).toBe(1);
+                expect(sassValue2.getG()).toBe(2);
+                expect(sassValue2.getB()).toBe(3);
+                expect(sassValue2.getA()).toBeCloseTo(1.0, 0.0);
+
+                expect(sassValue3 instanceof SassColor).toBe(false);
+            });
+
+            it('should be able to convert colors in rgba() format', function () {
+                var sassValue1 = toSassValue('rgba ( 11 , 23 , 58 , 0.618033989     )'),
+                    sassValue2 = toSassValue('rgba(69, 420, 1337, 3.14)');
+
+                expect(sassValue1 instanceof SassColor).toBe(true);
+                expect(sassValue1.getR()).toBe(11);
+                expect(sassValue1.getG()).toBe(23);
+                expect(sassValue1.getB()).toBe(58);
+                expect(sassValue1.getA()).toBeCloseTo(0.618033989, 0.7);
+
+                expect(sassValue2 instanceof SassColor).not.toBe(true);
+            });
+
+            // TODO test for other color formats
+            // TODO refactor tests (i.e. change variable names, remove excess variables)?
+        });
+
         describe('upon converting arrays', function () {
-            it('should be able to convert arrays', function () {
+            it('should be able to convert unidimensional arrays', function () {
                 var jsValue = [1, 2, 3, 4, 5],
                     sassValue = toSassValue(jsValue);
 
@@ -188,9 +244,9 @@
                 }
 
                 expect(sassValue instanceof SassList).toBe(true);
-                expect(sassValue.getValue(1).getValue()).toBe(2);
-                expect(getLastItem).not.toThrow(RangeError('Out of bound index'));
+                expect(sassValue.getValue(1).getValue()).toBe(jsValue[1]);
                 expect(getOutOfRange).toThrow(RangeError('Out of bound index'));
+                expect(getLastItem).not.toThrow(RangeError('Out of bound index'));
                 expect(getLastItem().getValue()).toBe(5);
             });
 
@@ -212,6 +268,19 @@
                 expect(getItemAt(2, 3) instanceof SassNumber).toBe(true); // clincher, but because it can be parsed as Number, it will.
                 expect(getItemAt(1, 4) instanceof SassNumber).toBe(true);
                 expect(getItemAt(2, 4) instanceof SassList).toBe(true);
+            });
+
+            it('should be able to convert the arguments object to a SassList', function () {
+                var sassValue;
+
+                function getArgs() {
+                    return toSassValue(arguments);
+                }
+
+                sassValue = getArgs('corn', 'chicken', 'cheese');
+
+                expect(sassValue instanceof SassList).toBe(true);
+                expect(sassValue.getLength()).toBe(3);
             });
         });
     });
