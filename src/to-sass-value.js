@@ -9,7 +9,8 @@
 (function () {
     var sass = require('node-sass'),
         parseColor = require('parse-color'),
-        booleanStrings = require('./booleans'),
+        booleanStrings,
+        colorChannelStrings,
 
         // ReSharper disable once DuplicatingLocalDeclaration
         toSassValue,
@@ -52,6 +53,17 @@
         return !(isAboveMax || isBelowMin);
     }
 
+    function isValidColorObject(obj) {
+        // TODO don't restrict to RGB(A)
+        // TODO normalize attributes (e.g. red => r, alpha => a, etc.)
+        return (Object.keys(obj).length === 4 &&
+            !isNaN(obj.r) &&
+            !isNaN(obj.g) &&
+            !isNaN(obj.b) &&
+            !isNaN(obj.a)
+        );
+    }
+
     /**
      * Converts a JavaScript value to a Sass color.
      * @param {*} jsValue A JavaScript value.
@@ -69,6 +81,10 @@
                 }
                 break;
             case 'object':
+                if (!isValidColorObject(jsValue)) {
+                    return null;
+                }
+
                 values = [ jsValue.r, jsValue.g, jsValue.b, jsValue.a ];
                 break;
             default:
@@ -107,6 +123,9 @@
             unit = '';
 
         if (typeof jsValue === 'object') {
+            if (!(Object.keys(jsValue).length === 2 && !!jsValue.value && !!jsValue.unit)) {
+                return null;
+            }
             numValue = jsValue.value;
             unit = jsValue.unit;
         }
@@ -239,12 +258,81 @@
     }
 
     /**
+     * Checks if a value is a String.
+     * @param {*} value A value.
+     * @returns {Boolean} Is value a String?
+     */
+    function isString(value) {
+        return typeof value === 'string';
+    }
+
+    /**
+     * Initializes the recognized Boolean strings.
+     * @param {Object} booleans The hash of Boolean strings.
+     */
+    function initializeBooleans(booleans) {
+        booleanStrings = {
+            truthy: [
+                'true',
+                'yes',
+                'on'
+            ],
+            falsey: [
+                'false',
+                'no',
+                'off'
+            ]
+        };
+
+        Object.keys(booleanStrings)
+            .filter(function (booleanCategory) {
+                return !!booleans[booleanCategory];
+            })
+            .forEach(function (booleanCategory) {
+                var validStrings = booleans[booleanCategory].filter(isString);
+
+                booleanStrings[booleanCategory] = booleanStrings[booleanCategory].concat(validStrings);
+            });
+    }
+
+    /**
+     * Initializes the recognized color channel strings.
+     * @param {Object} strings
+     */
+    function initializeColorChannelStrings(strings) {
+        colorChannelStrings = {
+            a: ['alpha'],
+            b: ['blue'],
+            c: ['cyan'],
+            g: ['green'],
+            h: ['hue'],
+            k: ['black'],
+            l: ['lightness'],
+            m: ['magenta'],
+            r: ['red'],
+            s: ['saturation'],
+            v: ['value'],
+            y: ['yellow']
+        };
+
+        Object.keys(colorChannelStrings)
+            .filter(function (channel) {
+                return !!strings[channel];
+            })
+            .forEach(function (channel) {
+                var validStrings = strings[channel].filter(isString);
+
+                colorChannelStrings[channel] = colorChannelStrings[channel].concat(validStrings);
+            });
+    }
+
+    /**
      * Converts a JavaScript value to its corresponding Sass value.
      * @param {*} jsValue A JavaScript value.
      * @returns {SassNull|SassNumber|SassColor|SassBoolean|SassString|SassList|SassMap} Corresponding Sass value.
      */
     // ReSharper disable once DuplicatingLocalDeclaration
-    module.exports = toSassValue = function toSassValue(jsValue) {
+    toSassValue = function toSassValue(jsValue) {
         if (jsValue === null || jsValue === undefined) {
             return SassNull.NULL;
         }
@@ -259,7 +347,7 @@
                 break;
         }
 
-        if ("" + jsValue === '[object Arguments]') {
+        if ('' + jsValue === '[object Arguments]') {
             jsValue = Array.from(jsValue);
         }
 
@@ -268,5 +356,23 @@
         }
 
         return toSassMap(jsValue);
+    };
+
+    /**
+     * Creates a custom toSassValue() function.
+     * @param {Object} config The configuration object.
+     * @returns {Function} The toSassValue() function.
+     */
+    module.exports = function customToSassValue(config) {
+        config = config || {};
+        config.boolean = config.boolean || {};
+        config.boolean.booleans = config.boolean.booleans || {};
+        config.color = config.color || {};
+        config.color.channels = config.color.channels || {};
+
+        initializeBooleans(config.boolean.booleans);
+        initializeColorChannelStrings(config.color.channels);
+
+        return toSassValue;
     };
 })();
