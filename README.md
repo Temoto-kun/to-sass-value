@@ -49,4 +49,4 @@ Please star the repo if you find it useful in your projects.
 
 ## License
 
-MIT. See LICENSE file for details.
+MIT. See [LICENSE file](https://raw.githubusercontent.com/Temoto-kun/to-sass-value/master/LICENSE) for details.
