@@ -1,3 +1,3 @@
 (function () {
-    require('./build/to-sass-value');
+    module.exports = require('./src/to-sass-value');
 })();

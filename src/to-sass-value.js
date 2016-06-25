@@ -26,7 +26,7 @@
 
     /**
      * Parses a color string.
-     * @param colorString A color string
+     * @param {String} colorString A color string.
      * @returns {Array|undefined} The RGB(A) color channels, or undefined if the string cannot be parsed as a color.
      */
     function parseColorString(colorString) {
@@ -35,6 +35,14 @@
         return parsedColorValues.rgba || parsedColorValues.rgb;
     }
 
+    /**
+     * Checks if color values provided are valid.
+     * @param {Number} red The red channel value.
+     * @param {Number} green The green channel value.
+     * @param {Number} blue The blue channel value.
+     * @param {Number} alpha The alpha channel value.
+     * @returns {Boolean} Are color values valid? 
+     */
     function isValidColorValues(red, green, blue, alpha) {
         const maxChannel = 255,
             maxAlpha = 1.0,
@@ -53,15 +61,123 @@
         return !(isAboveMax || isBelowMin);
     }
 
+    /**
+     * Normalizes the color objects (i.e. converting "red" => "r", "cyan" => "c", "lightness" => "l" etc).
+     * @param {Object} obj The color object. 
+     * @returns {Object} The normalized color object.
+     */
+    function normalizeColorObject(obj) {
+        var colorObj = {};
+
+        Object.keys(obj).forEach(function (objChannel) {
+            objChannel = objChannel.trim().toLowerCase();
+
+            Object.keys(colorChannelStrings).forEach(function (colorChannel) {
+                if (colorChannelStrings[colorChannel].indexOf(objChannel) === -1) {
+                    return;
+                }
+
+                colorObj[colorChannel] = obj[objChannel];
+            });
+        });
+
+        return colorObj;
+    }
+
+    /**
+     * Determines the color space of a color object.
+     * @param {Object} colorObj An object representing a color.
+     * @returns {String|null} The object's color space, or null if it is an unrecognized color space.
+     */
+    function determineColorSpace(colorObj) {
+        var hasAlpha = !isNaN(colorObj.a),
+            isRgb = !(isNaN(colorObj.r) || isNaN(colorObj.g) || isNaN(colorObj.b)),
+            isHs = !(isNaN(colorObj.h) || isNaN(colorObj.s)),
+            isHsl = isHs && !isNaN(colorObj.l),
+            isHsv = isHs && !isNaN(colorObj.v),
+            isCmyk = !(isNaN(colorObj.c) || isNaN(colorObj.m) || isNaN(colorObj.y) || isNaN(colorObj.k)),
+            colorSpace = null;
+
+        if (isRgb) {
+            colorSpace = 'rgb';
+        }
+
+        if (isHsl) {
+            colorSpace = 'hsl';
+        }
+
+        if (isHsv) {
+            colorSpace = 'hsv';
+        }
+
+        if (isCmyk) {
+            colorSpace = 'cmyk';
+        }
+
+        if (hasAlpha && !!colorSpace) {
+            colorSpace += 'a';
+        }
+
+        return colorSpace;
+    }
+
+    /**
+     * Determines if an object represents a color.
+     * @param {Object} obj An object.
+     * @returns {Boolean} Does obj represent a color?
+     */
     function isValidColorObject(obj) {
-        // TODO don't restrict to RGB(A)
-        // TODO normalize attributes (e.g. red => r, alpha => a, etc.)
-        return (Object.keys(obj).length === 4 &&
-            !isNaN(obj.r) &&
-            !isNaN(obj.g) &&
-            !isNaN(obj.b) &&
-            !isNaN(obj.a)
-        );
+        return !!determineColorSpace(obj);
+    }
+
+    /**
+     * Gets the color channel values of an object representing a color within a color space.
+     * @param {Object} colorObj A color object.
+     * @param {String} colorSpace The color space of the color object.
+     * @returns {Array|null} The color's channels' values, or null if the channel values cannot be extracted.
+     */
+    function getColorChannelValues(colorObj, colorSpace) {
+        switch (colorSpace) {
+            case 'rgb':
+                return [colorObj.r, colorObj.g, colorObj.b];
+            case 'rgba':
+                return [colorObj.r, colorObj.g, colorObj.b, colorObj.a];
+            case 'hsl':
+                return [colorObj.h, colorObj.s, colorObj.l];
+            case 'hsla':
+                return [colorObj.h, colorObj.s, colorObj.l, colorObj.a];
+            case 'hsv':
+                return [colorObj.h, colorObj.s, colorObj.v];
+            case 'hsva':
+                return [colorObj.h, colorObj.s, colorObj.v, colorObj.a];
+            case 'cmyk':
+                return [colorObj.c, colorObj.m, colorObj.y, colorObj.k];
+            case 'cmyka':
+                return [colorObj.c, colorObj.m, colorObj.y, colorObj.k, colorObj.a];
+            default:
+                break;
+        }
+
+        return null;
+    }
+
+    /**
+     * Converts a color object to a string.
+     * @param {Object} colorObj A color object. 
+     * @returns {String} The color object's string representation.
+     */
+    function stringifyColorChannelValues(colorObj) {
+        var colorSpace = determineColorSpace(colorObj),
+            colorChannelValues = getColorChannelValues(colorObj, colorSpace);
+
+        return !!colorChannelValues ? colorChannelValues.join(',') : null;
+    }
+
+    function stringifyColorObject(obj) {
+        var colorChannelValues = stringifyColorChannelValues(obj),
+            colorSpace = determineColorSpace(obj);
+
+        return `${colorSpace}(${colorChannelValues})`;
     }
 
     /**
@@ -70,7 +186,7 @@
      * @returns {SassColor|null} A Sass color, or null if jsValue cannot be parsed as a color.
      */
     function toSassColor(jsValue) {
-        var values;
+        var values = null;
 
         switch (typeof jsValue) {
             case 'string':
@@ -79,27 +195,29 @@
                 if (!values) {
                     return null;
                 }
-                break;
+
+                if (isNaN(values[3])) {
+                    values[3] = 1.0;
+                }
+
+                if (!isValidColorValues.apply(null, values)) {
+                    return null;
+                }
+                
+                return new SassColor(values[0], values[1], values[2], values[3]);
             case 'object':
-                if (!isValidColorObject(jsValue)) {
+                normalizedObject = normalizeColorObject(jsValue);
+
+                if (!isValidColorObject(normalizedObject)) {
                     return null;
                 }
 
-                values = [ jsValue.r, jsValue.g, jsValue.b, jsValue.a ];
-                break;
+                return toSassColor(stringifyColorObject(normalizedObject));
             default:
-                return null;
+                break;
         }
 
-        if (isNaN(values[3])) {
-            values[3] = 1.0;
-        }
-
-        if (!isValidColorValues.apply(null, values)) {
-            return null;
-        }
-
-        return new SassColor(values[0], values[1], values[2], values[3]);
+        return null;
     }
 
     /**
@@ -375,4 +493,7 @@
 
         return toSassValue;
     };
+
+    // TODO convert dates to string representation
+    // TODO add options for date format
 })();

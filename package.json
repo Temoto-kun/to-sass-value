@@ -1,11 +1,10 @@
 {
   "name": "@theoryofnekomata/to-sass-value",
-  "version": "0.0.1",
+  "version": "0.4.0",
   "description": "Converts a JavaScript value to its corresponding Sass value for use in https://github.com/sass/node-sass.",
   "main": "index.js",
   "scripts": {
-    "build": "gulp build",
-    "test": "gulp test"
+    "test": "node test.js"
   },
   "repository": {
     "type": "git",
@@ -29,8 +28,7 @@
     "parse-color": "^1.0.0"
   },
   "devDependencies": {
-    "gulp": "^3.9.1",
-    "gulp-jasmine": "^2.4.0",
-    "gulp-load-plugins": "^1.2.4"
+    "jasmine": "^2.4.1",
+    "jasmine-spec-reporter": "^2.5.0"
   }
 }
