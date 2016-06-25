@@ -12,7 +12,8 @@
   },
   "keywords": [
     "Sass",
-    "node-sass"
+    "node-sass",
+    "conversion"
   ],
   "author": "Temoto-kun <kiiroifuriku@hotmail.com>",
   "license": "MIT",
