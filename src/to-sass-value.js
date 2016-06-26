@@ -2,10 +2,9 @@
  * to-sass-value
  * Converts a JavaScript value to its corresponding Sass value.
  *
- * Author: TheoryOfNekomata <allan.crisostomo@outlook.com>
- * License: MIT
+ * @author TheoryOfNekomata <allan.crisostomo@outlook.com>
+ * @license MIT
  */
-
 (function () {
     var sass = require('node-sass'),
         parseColor = require('parse-color'),
@@ -170,7 +169,7 @@
         var colorSpace = determineColorSpace(colorObj),
             colorChannelValues = getColorChannelValues(colorObj, colorSpace);
 
-        return !!colorChannelValues ? colorChannelValues.join(',') : null;
+        return colorChannelValues !== null ? colorChannelValues.join(',') : null;
     }
 
     function stringifyColorObject(obj) {
@@ -186,7 +185,8 @@
      * @returns {SassColor|null} A Sass color, or null if jsValue cannot be parsed as a color.
      */
     function toSassColor(jsValue) {
-        var values = null;
+        var values = null,
+            normalizedObject = null;
 
         switch (typeof jsValue) {
             case 'string':
@@ -348,7 +348,7 @@
             colorValue = toSassColor(jsValue) || toSassNumber(jsValue),
             sassMap = new SassMap(keys.length);
 
-        if (!!colorValue) {
+        if (colorValue !== null) {
             return colorValue;
         }
 
@@ -363,7 +363,7 @@
     /**
      * Converts a JavaScript value as a Sass list.
      * @param {Array} jsValue A JavaScript value.
-     * @returns {SassList} A Sass list.
+     * @return {SassList} A Sass list.
      */
     function toSassList(jsValue) {
         var sassList = new SassList(jsValue.length, true);
@@ -378,7 +378,7 @@
     /**
      * Checks if a value is a String.
      * @param {*} value A value.
-     * @returns {Boolean} Is value a String?
+     * @return {Boolean} Is value a String?
      */
     function isString(value) {
         return typeof value === 'string';
@@ -387,6 +387,7 @@
     /**
      * Initializes the recognized Boolean strings.
      * @param {Object} booleans The hash of Boolean strings.
+     * @returns {undefined}
      */
     function initializeBooleans(booleans) {
         booleanStrings = {
@@ -415,7 +416,8 @@
 
     /**
      * Initializes the recognized color channel strings.
-     * @param {Object} strings
+     * @param {Object} strings The hash of color channel strings.
+     * @returns {undefined}
      */
     function initializeColorChannelStrings(strings) {
         colorChannelStrings = {

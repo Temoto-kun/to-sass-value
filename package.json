@@ -4,7 +4,8 @@
   "description": "Converts a JavaScript value to its corresponding Sass value for use in https://github.com/sass/node-sass.",
   "main": "index.js",
   "scripts": {
-    "test": "node test.js"
+    "test": "eslint --env jasmine,node spec/**/*.js && node test.js",
+    "lint": "eslint --env es6,node src/**/*.js"
   },
   "repository": {
     "type": "git",
@@ -22,7 +23,13 @@
   },
   "homepage": "https://github.com/Temoto-kun/to-sass-value#readme",
   "eslintConfig": {
-    "extends": "eslint:recommended"
+    "root": true,
+    "extends": "eslint:recommended",
+    "rules": {
+      "valid-jsdoc": "error",
+      "eqeqeq": "error",
+      "valid-typeof": "error"
+    }
   },
   "dependencies": {
     "node-sass": "^3.8.0",

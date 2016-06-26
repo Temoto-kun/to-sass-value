@@ -11,6 +11,18 @@
         SassNull = sass.types.Null;
 
     describe('to-sass-value', function () {
+        describe('upon converting nothings', function () {
+            it('should be able to convert `null`', function () {
+                expect(toSassValue(null) instanceof SassNull).toBe(true);
+                expect(toSassValue('null') instanceof SassNull).toBe(false);
+            });
+
+            it('should be able to convert `undefined`', function () {
+                expect(toSassValue(undefined) instanceof SassNull).toBe(true);
+                expect(toSassValue('undefined') instanceof SassNull).toBe(false);
+            });
+        });
+
         describe('upon converting Boolean values', function () {
             it('should be able to convert simple Boolean values', function () {
                 var teaIsGreat = toSassValue(true),
