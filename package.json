@@ -1,6 +1,6 @@
 {
   "name": "@theoryofnekomata/to-sass-value",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "description": "Converts a JavaScript value to its corresponding Sass value for use in https://github.com/sass/node-sass.",
   "main": "index.js",
   "scripts": {
