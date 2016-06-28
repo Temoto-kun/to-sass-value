@@ -10,6 +10,7 @@
         parseColor = require('parse-color'),
         booleanStrings,
         colorChannelStrings,
+        isTimeIncluded,
 
         // ReSharper disable once DuplicatingLocalDeclaration
         toSassValue,
@@ -339,6 +340,15 @@
     }
 
     /**
+     * Converts a JavaScript date to its Sass representation (a Sass string).
+     * @param {Date} jsDate A JavaScript Date.
+     * @returns {SassString} The Date representation.
+     */
+    function toSassDate(jsDate) {
+        return new SassString(stringifyDate(jsDate));
+    }
+
+    /**
      * Converts a JavaScript value as a Sass map.
      * @param {Object} jsValue A JavaScript value.
      * @returns {SassColor|SassNumber|SassMap} A Sass map, or a color/number if it can be parsed.
@@ -447,6 +457,45 @@
     }
 
     /**
+     * Adds a padding to a value.
+     * @param {*} value A value.
+     * @param {Number} length The minimum length of the resulting string.
+     * @param {String} pad The pad character. Defaults to a space character.
+     * @returns {String} The padded value.
+     */
+    function pad(value, length, pad) {
+        var strVal = '' + value,
+            isLeftPad = length < 0;
+
+        pad = ('' + pad) || ' ';
+
+        if (isLeftPad) {
+            length *= -1; 
+        }
+
+        while(strVal.length < length) {
+            strVal = isLeftPad ? (pad + strVal) : (strVal + pad);
+        }
+
+        return strVal;
+    }
+
+    /**
+     * Converts a Date object to its String representation.
+     * @param {Date} date A Date object.
+     * @returns {String} The string representation of the date.
+     */
+    function stringifyDate(date) {
+        var dateStr = date.getFullYear() + '-' + pad(date.getMonth() + 1, -2, '0') + '-' + pad(date.getDate(), -2, '0');
+
+        if (isTimeIncluded) {
+            dateStr += 'T' + pad(date.getHours(), -2, '0') + ':' + pad(date.getMinutes(), -2, '0') + ':' + pad(date.getSeconds(), -2, '0');
+        }
+
+        return dateStr;
+    }
+
+    /**
      * Converts a JavaScript value to its corresponding Sass value.
      * @param {*} jsValue A JavaScript value.
      * @returns {SassNull|SassNumber|SassColor|SassBoolean|SassString|SassList|SassMap} Corresponding Sass value.
@@ -463,6 +512,8 @@
             case 'boolean':
                 // For meticulous validation, use the string converter.
                 return toSassString(jsValue);
+            case 'function':
+                return SassNull.NULL;
             default:
                 break;
         }
@@ -471,12 +522,25 @@
             jsValue = Array.from(jsValue);
         }
 
+        if (jsValue instanceof Date) {
+            return toSassDate(jsValue);
+        }
+
         if (jsValue instanceof Array) {
             return toSassList(jsValue);
         }
 
         return toSassMap(jsValue);
     };
+
+    /**
+     * Initializes the date conversion.
+     * @param {Object} config The configuration object.
+     * @returns {undefined}
+     */
+    function initializeDateConversion(config) {
+        isTimeIncluded = config.isTimeIncluded;
+    }
 
     /**
      * Creates a custom toSassValue() function.
@@ -489,13 +553,14 @@
         config.boolean.booleans = config.boolean.booleans || {};
         config.color = config.color || {};
         config.color.channels = config.color.channels || {};
+        config.date = config.date || {};
 
         initializeBooleans(config.boolean.booleans);
         initializeColorChannelStrings(config.color.channels);
+        initializeDateConversion(config.date);
 
         return toSassValue;
     };
-
-    // TODO convert dates to string representation
+    
     // TODO add options for date format
 })();

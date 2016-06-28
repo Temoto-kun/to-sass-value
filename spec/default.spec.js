@@ -281,6 +281,52 @@
                 expect(hsva instanceof SassColor).toBe(true);
                 expect(cmyka instanceof SassColor).toBe(true);
             });
+
+            it('should be able to convert color objects to SassColor', function () {
+                var color = toSassValue({
+                        red: 123,
+                        green: 143,
+                        blue: 69
+                    }),
+                    invalidColor = toSassValue({
+                        rojo: 124,
+                        verde: 34,
+                        azul: 43
+                    });
+
+                expect(color instanceof SassColor).toBe(true);
+                expect(invalidColor instanceof SassColor).toBe(false);
+                expect(invalidColor instanceof SassMap).toBe(true);
+            });
+
+            it('should be able to add custom formats of colors', function () {
+                var toSassValue = require('./../src/to-sass-value')({
+                        color: {
+                            channels: {
+                                r: ['rojo'],
+                                g: ['verde'],
+                                b: ['azul']
+                            }
+                        }
+                    }),
+                    color = toSassValue({
+                        red: 123,
+                        green: 143,
+                        blue: 69
+                    }),
+                    validColor = toSassValue({
+                        rojo: 124,
+                        verde: 34,
+                        azul: 43
+                    });
+
+                expect(color instanceof SassColor).toBe(true);
+                expect(validColor instanceof SassColor).toBe(true);
+                expect(validColor instanceof SassMap).toBe(false);
+                expect(validColor.getR()).toBe(124);
+                expect(validColor.getG()).toBe(34);
+                expect(validColor.getB()).toBe(43);
+            });
         });
 
         describe('upon converting arrays', function () {
@@ -355,50 +401,15 @@
                 expect(obj.getLength()).toBe(6);
             });
 
-            it('should be able to convert color objects to SassColor', function () {
-                var color = toSassValue({
-                        red: 123,
-                        green: 143,
-                        blue: 69
-                    }),
-                    invalidColor = toSassValue({
-                        rojo: 124,
-                        verde: 34,
-                        azul: 43
-                    });
+            it('should be able to convert Date objects to SassString', function () {
+                var sassDate1 = toSassValue(new Date('1995-03-02')),
+                    sassDate2 = toSassValue(new Date(1995, 2, 2, 1, 20, 0));
 
-                expect(color instanceof SassColor).toBe(true);
-                expect(invalidColor instanceof SassColor).toBe(false);
-                expect(invalidColor instanceof SassMap).toBe(true);
-            });
+                expect(sassDate1 instanceof SassString).toBe(true);
+                expect(sassDate2 instanceof SassString).toBe(true);
 
-            it('should be able to add custom formats of colors', function () {
-                var toSassValue = require('./../src/to-sass-value')({
-                        color: {
-                            channels: {
-                                r: ['rojo'],
-                                g: ['verde'],
-                                b: ['azul']
-                            }
-                        }
-                    }),
-                    color = toSassValue({
-                        red: 123,
-                        green: 143,
-                        blue: 69
-                    }),
-                    validColor = toSassValue({
-                        rojo: 124,
-                        verde: 34,
-                        azul: 43
-                    });
-
-                expect(color instanceof SassColor).toBe(true);
-                expect(validColor instanceof SassColor).toBe(true);
-                expect(validColor instanceof SassMap).toBe(false);
-                expect(validColor.getR()).toBe(124);
-                expect(validColor.getG()).toBe(34);
-                expect(validColor.getB()).toBe(43);
+                expect(sassDate1.getValue()).toBe('1995-03-02');
+                expect(sassDate2.getValue()).toBe('1995-03-02');
             });
         });
     });
