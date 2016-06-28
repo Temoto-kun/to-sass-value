@@ -5,10 +5,12 @@
  * @author TheoryOfNekomata <allan.crisostomo@outlook.com>
  * @license MIT
  */
-(function () {
-    var sass = require('node-sass'),
-        parseColor = require('parse-color'),
-        booleanStrings,
+
+var sass = require('node-sass'),
+    parseColor = require('parse-color');
+
+(function _toSassValue() {
+    var booleanStrings,
         colorChannelStrings,
         isTimeIncluded,
 
@@ -69,10 +71,10 @@
     function normalizeColorObject(obj) {
         var colorObj = {};
 
-        Object.keys(obj).forEach(function (objChannel) {
+        Object.keys(obj).forEach(function eachColorObjectChannel(objChannel) {
             objChannel = objChannel.trim().toLowerCase();
 
-            Object.keys(colorChannelStrings).forEach(function (colorChannel) {
+            Object.keys(colorChannelStrings).forEach(function eachColorChannelString(colorChannel) {
                 if (colorChannelStrings[colorChannel].indexOf(objChannel) === -1) {
                     return;
                 }
@@ -274,7 +276,7 @@
         var isTrue = false,
             normalizedString = jsValue.trim().toLowerCase();
 
-        booleanStrings.truthy.forEach(function (string) {
+        booleanStrings.truthy.forEach(function eachTruthyString(string) {
             isTrue = isTrue || normalizedString === string;
         });
 
@@ -290,7 +292,7 @@
         var isFalsey = false,
             normalizedString = jsValue.trim().toLowerCase();
 
-        booleanStrings.falsey.forEach(function (string) {
+        booleanStrings.falsey.forEach(function eachFalseyString(string) {
             isFalsey = isFalsey || normalizedString === string;
         });
 
@@ -340,123 +342,6 @@
     }
 
     /**
-     * Converts a JavaScript date to its Sass representation (a Sass string).
-     * @param {Date} jsDate A JavaScript Date.
-     * @returns {SassString} The Date representation.
-     */
-    function toSassDate(jsDate) {
-        return new SassString(stringifyDate(jsDate));
-    }
-
-    /**
-     * Converts a JavaScript value as a Sass map.
-     * @param {Object} jsValue A JavaScript value.
-     * @returns {SassColor|SassNumber|SassMap} A Sass map, or a color/number if it can be parsed.
-     */
-    function toSassMap(jsValue) {
-        var keys = Object.keys(jsValue),
-            colorValue = toSassColor(jsValue) || toSassNumber(jsValue),
-            sassMap = new SassMap(keys.length);
-
-        if (colorValue !== null) {
-            return colorValue;
-        }
-
-        keys.forEach(function (key, i) {
-            sassMap.setKey(i, new SassString(key));
-            sassMap.setValue(i, toSassValue(jsValue[key]));
-        });
-
-        return sassMap;
-    }
-
-    /**
-     * Converts a JavaScript value as a Sass list.
-     * @param {Array} jsValue A JavaScript value.
-     * @return {SassList} A Sass list.
-     */
-    function toSassList(jsValue) {
-        var sassList = new SassList(jsValue.length, true);
-
-        jsValue.forEach(function (item, i) {
-            sassList.setValue(i, toSassValue(item));
-        });
-
-        return sassList;
-    }
-
-    /**
-     * Checks if a value is a String.
-     * @param {*} value A value.
-     * @return {Boolean} Is value a String?
-     */
-    function isString(value) {
-        return typeof value === 'string';
-    }
-
-    /**
-     * Initializes the recognized Boolean strings.
-     * @param {Object} booleans The hash of Boolean strings.
-     * @returns {undefined}
-     */
-    function initializeBooleans(booleans) {
-        booleanStrings = {
-            truthy: [
-                'true',
-                'yes',
-                'on'
-            ],
-            falsey: [
-                'false',
-                'no',
-                'off'
-            ]
-        };
-
-        Object.keys(booleanStrings)
-            .filter(function (booleanCategory) {
-                return !!booleans[booleanCategory];
-            })
-            .forEach(function (booleanCategory) {
-                var validStrings = booleans[booleanCategory].filter(isString);
-
-                booleanStrings[booleanCategory] = booleanStrings[booleanCategory].concat(validStrings);
-            });
-    }
-
-    /**
-     * Initializes the recognized color channel strings.
-     * @param {Object} strings The hash of color channel strings.
-     * @returns {undefined}
-     */
-    function initializeColorChannelStrings(strings) {
-        colorChannelStrings = {
-            a: ['alpha'],
-            b: ['blue'],
-            c: ['cyan'],
-            g: ['green'],
-            h: ['hue'],
-            k: ['black'],
-            l: ['lightness'],
-            m: ['magenta'],
-            r: ['red'],
-            s: ['saturation'],
-            v: ['value'],
-            y: ['yellow']
-        };
-
-        Object.keys(colorChannelStrings)
-            .filter(function (channel) {
-                return !!strings[channel];
-            })
-            .forEach(function (channel) {
-                var validStrings = strings[channel].filter(isString);
-
-                colorChannelStrings[channel] = colorChannelStrings[channel].concat(validStrings);
-            });
-    }
-
-    /**
      * Adds a padding to a value.
      * @param {*} value A value.
      * @param {Number} length The minimum length of the resulting string.
@@ -496,13 +381,130 @@
     }
 
     /**
+     * Converts a JavaScript date to its Sass representation (a Sass string).
+     * @param {Date} jsDate A JavaScript Date.
+     * @returns {SassString} The Date representation.
+     */
+    function toSassDate(jsDate) {
+        return new SassString(stringifyDate(jsDate));
+    }
+
+    /**
+     * Converts a JavaScript value as a Sass map.
+     * @param {Object} jsValue A JavaScript value.
+     * @returns {SassColor|SassNumber|SassMap} A Sass map, or a color/number if it can be parsed.
+     */
+    function toSassMap(jsValue) {
+        var keys = Object.keys(jsValue),
+            colorValue = toSassColor(jsValue) || toSassNumber(jsValue),
+            sassMap = new SassMap(keys.length);
+
+        if (colorValue !== null) {
+            return colorValue;
+        }
+
+        keys.forEach(function eachKey(key, i) {
+            sassMap.setKey(i, new SassString(key));
+            sassMap.setValue(i, toSassValue(jsValue[key]));
+        });
+
+        return sassMap;
+    }
+
+    /**
+     * Converts a JavaScript value as a Sass list.
+     * @param {Array} jsValue A JavaScript value.
+     * @return {SassList} A Sass list.
+     */
+    function toSassList(jsValue) {
+        var sassList = new SassList(jsValue.length, true);
+
+        jsValue.forEach(function eachItem(item, i) {
+            sassList.setValue(i, toSassValue(item));
+        });
+
+        return sassList;
+    }
+
+    /**
+     * Checks if a value is a String.
+     * @param {*} value A value.
+     * @return {Boolean} Is value a String?
+     */
+    function isString(value) {
+        return typeof value === 'string';
+    }
+
+    /**
+     * Initializes the recognized Boolean strings.
+     * @param {Object} booleans The hash of Boolean strings.
+     * @returns {undefined}
+     */
+    function initializeBooleans(booleans) {
+        booleanStrings = {
+            truthy: [
+                'true',
+                'yes',
+                'on'
+            ],
+            falsey: [
+                'false',
+                'no',
+                'off'
+            ]
+        };
+
+        Object.keys(booleanStrings)
+            .filter(function onlyDefinedBooleanCategory(booleanCategory) {
+                return !!booleans[booleanCategory];
+            })
+            .forEach(function eachBooleanString(booleanCategory) {
+                var validStrings = booleans[booleanCategory].filter(isString);
+
+                booleanStrings[booleanCategory] = booleanStrings[booleanCategory].concat(validStrings);
+            });
+    }
+
+    /**
+     * Initializes the recognized color channel strings.
+     * @param {Object} strings The hash of color channel strings.
+     * @returns {undefined}
+     */
+    function initializeColorChannelStrings(strings) {
+        colorChannelStrings = {
+            a: ['alpha'],
+            b: ['blue'],
+            c: ['cyan'],
+            g: ['green'],
+            h: ['hue'],
+            k: ['black'],
+            l: ['lightness'],
+            m: ['magenta'],
+            r: ['red'],
+            s: ['saturation'],
+            v: ['value'],
+            y: ['yellow']
+        };
+
+        Object.keys(colorChannelStrings)
+            .filter(function onlyDefinedColorChannel(channel) {
+                return !!strings[channel];
+            })
+            .forEach(function eachChannel(channel) {
+                var validStrings = strings[channel].filter(isString);
+
+                colorChannelStrings[channel] = colorChannelStrings[channel].concat(validStrings);
+            });
+    }
+
+    /**
      * Converts a JavaScript value to its corresponding Sass value.
      * @param {*} jsValue A JavaScript value.
      * @returns {SassNull|SassNumber|SassColor|SassBoolean|SassString|SassList|SassMap} Corresponding Sass value.
      */
     // ReSharper disable once DuplicatingLocalDeclaration
     toSassValue = function toSassValue(jsValue) {
-        if (jsValue === null || jsValue === undefined) {
+        if (jsValue === null || typeof jsValue === 'undefined') {
             return SassNull.NULL;
         }
 

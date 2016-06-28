@@ -24,12 +24,7 @@
   "homepage": "https://github.com/Temoto-kun/to-sass-value#readme",
   "eslintConfig": {
     "root": true,
-    "extends": "eslint:recommended",
-    "rules": {
-      "valid-jsdoc": "error",
-      "eqeqeq": "error",
-      "valid-typeof": "error"
-    }
+    "extends": "@theoryofnekomata/eslint-config-q3-2016"
   },
   "dependencies": {
     "node-sass": "^3.8.0",
