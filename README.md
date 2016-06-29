@@ -32,8 +32,19 @@ var sassString = toSassValue('a'),
 
 ## Notes
 
-- It does not support converting `Function` instances (seriously, why would you do that?)
-- It does not support recursive objects.
+It supports conversion of:
+- numbers + optional units (integers and floats)
+- strings
+- arrays
+- objects
+- colors
+- Booleans
+- `null` and `undefined`
+- dates (powered by [Moment.js](https://momentjs.com))
+
+It does not support conversion of
+- functions (converts it to `SassTypes.Null.NULL`)
+- complex objects (such as recursive ones)
 
 ## Contribution
 

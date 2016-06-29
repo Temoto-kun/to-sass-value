@@ -7,12 +7,13 @@
  */
 
 var sass = require('node-sass'),
-    parseColor = require('parse-color');
+    parseColor = require('parse-color'),
+    moment = require('moment');
 
 (function _toSassValue() {
     var booleanStrings,
         colorChannelStrings,
-        isTimeIncluded,
+        dateFormat,
 
         // ReSharper disable once DuplicatingLocalDeclaration
         toSassValue,
@@ -74,13 +75,9 @@ var sass = require('node-sass'),
         Object.keys(obj).forEach(function eachColorObjectChannel(objChannel) {
             objChannel = objChannel.trim().toLowerCase();
 
-            Object.keys(colorChannelStrings).forEach(function eachColorChannelString(colorChannel) {
-                if (colorChannelStrings[colorChannel].indexOf(objChannel) === -1) {
-                    return;
-                }
-
-                colorObj[colorChannel] = obj[objChannel];
-            });
+            Object.keys(colorChannelStrings)
+                .filter((colorChannel) => colorChannelStrings[colorChannel].indexOf(objChannel) > -1)
+                .forEach((colorChannel) => colorObj[colorChannel] = obj[objChannel]);
         });
 
         return colorObj;
@@ -276,9 +273,7 @@ var sass = require('node-sass'),
         var isTrue = false,
             normalizedString = jsValue.trim().toLowerCase();
 
-        booleanStrings.truthy.forEach(function eachTruthyString(string) {
-            isTrue = isTrue || normalizedString === string;
-        });
+        booleanStrings.truthy.forEach((string) => isTrue = isTrue || normalizedString === string);
 
         return isTrue;
     }
@@ -292,9 +287,7 @@ var sass = require('node-sass'),
         var isFalsey = false,
             normalizedString = jsValue.trim().toLowerCase();
 
-        booleanStrings.falsey.forEach(function eachFalseyString(string) {
-            isFalsey = isFalsey || normalizedString === string;
-        });
+        booleanStrings.falsey.forEach((string) => isFalsey = isFalsey || normalizedString === string);
 
         return isFalsey;
     }
@@ -342,54 +335,6 @@ var sass = require('node-sass'),
     }
 
     /**
-     * Adds a padding to a value.
-     * @param {*} value A value.
-     * @param {Number} length The minimum length of the resulting string.
-     * @param {String} pad The pad character. Defaults to a space character.
-     * @returns {String} The padded value.
-     */
-    function pad(value, length, pad) {
-        var strVal = '' + value,
-            isLeftPad = length < 0;
-
-        pad = ('' + pad) || ' ';
-
-        if (isLeftPad) {
-            length *= -1; 
-        }
-
-        while(strVal.length < length) {
-            strVal = isLeftPad ? (pad + strVal) : (strVal + pad);
-        }
-
-        return strVal;
-    }
-
-    /**
-     * Converts a Date object to its String representation.
-     * @param {Date} date A Date object.
-     * @returns {String} The string representation of the date.
-     */
-    function stringifyDate(date) {
-        var dateStr = date.getFullYear() + '-' + pad(date.getMonth() + 1, -2, '0') + '-' + pad(date.getDate(), -2, '0');
-
-        if (isTimeIncluded) {
-            dateStr += 'T' + pad(date.getHours(), -2, '0') + ':' + pad(date.getMinutes(), -2, '0') + ':' + pad(date.getSeconds(), -2, '0');
-        }
-
-        return dateStr;
-    }
-
-    /**
-     * Converts a JavaScript date to its Sass representation (a Sass string).
-     * @param {Date} jsDate A JavaScript Date.
-     * @returns {SassString} The Date representation.
-     */
-    function toSassDate(jsDate) {
-        return new SassString(stringifyDate(jsDate));
-    }
-
-    /**
      * Converts a JavaScript value as a Sass map.
      * @param {Object} jsValue A JavaScript value.
      * @returns {SassColor|SassNumber|SassMap} A Sass map, or a color/number if it can be parsed.
@@ -403,12 +348,38 @@ var sass = require('node-sass'),
             return colorValue;
         }
 
-        keys.forEach(function eachKey(key, i) {
+        keys.forEach((key, i) => {
             sassMap.setKey(i, new SassString(key));
             sassMap.setValue(i, toSassValue(jsValue[key]));
         });
 
         return sassMap;
+    }
+
+    /**
+     * Converts a JavaScript date to its Sass representation (a Sass string).
+     * @param {Date} jsDate A JavaScript Date.
+     * @returns {SassString} The Date representation.
+     */
+    function toSassDate(jsDate) {
+        var momentDate = moment(jsDate);
+
+        return toSassMap({
+            string: (dateFormat === null || typeof dateFormat === 'undefined') ?
+                momentDate.toISOString() :
+                momentDate.format(dateFormat),
+            mstimestamp: parseInt(momentDate.format('x')),
+            timestamp: parseInt(momentDate.format('X')),
+            millisecond: jsDate.getUTCMilliseconds(),
+            second: jsDate.getUTCSeconds(),
+            minute: jsDate.getUTCMinutes(),
+            hour: jsDate.getUTCHours(),
+            day: jsDate.getUTCDay(),
+            date: jsDate.getUTCDate(),
+            week: parseInt(momentDate.format('w')),
+            month: jsDate.getUTCMonth() + 1, // JavaScript's month is zero-indexed ;P
+            year: jsDate.getUTCFullYear()
+        });
     }
 
     /**
@@ -419,9 +390,7 @@ var sass = require('node-sass'),
     function toSassList(jsValue) {
         var sassList = new SassList(jsValue.length, true);
 
-        jsValue.forEach(function eachItem(item, i) {
-            sassList.setValue(i, toSassValue(item));
-        });
+        jsValue.forEach((item, i) => sassList.setValue(i, toSassValue(item)));
 
         return sassList;
     }
@@ -455,13 +424,11 @@ var sass = require('node-sass'),
         };
 
         Object.keys(booleanStrings)
-            .filter(function onlyDefinedBooleanCategory(booleanCategory) {
-                return !!booleans[booleanCategory];
-            })
-            .forEach(function eachBooleanString(booleanCategory) {
-                var validStrings = booleans[booleanCategory].filter(isString);
-
-                booleanStrings[booleanCategory] = booleanStrings[booleanCategory].concat(validStrings);
+            .filter((booleanCategory) => !!booleans[booleanCategory])
+            .forEach((booleanCategory) => {
+                booleanStrings[booleanCategory] = booleanStrings[booleanCategory].concat(
+                    booleans[booleanCategory].filter(isString)
+                );
             });
     }
 
@@ -487,13 +454,11 @@ var sass = require('node-sass'),
         };
 
         Object.keys(colorChannelStrings)
-            .filter(function onlyDefinedColorChannel(channel) {
-                return !!strings[channel];
-            })
-            .forEach(function eachChannel(channel) {
-                var validStrings = strings[channel].filter(isString);
-
-                colorChannelStrings[channel] = colorChannelStrings[channel].concat(validStrings);
+            .filter((channel) => !!strings[channel])
+            .forEach((channel) => {
+                colorChannelStrings[channel] = colorChannelStrings[channel].concat(
+                    strings[channel].filter(isString)
+                );
             });
     }
 
@@ -541,7 +506,7 @@ var sass = require('node-sass'),
      * @returns {undefined}
      */
     function initializeDateConversion(config) {
-        isTimeIncluded = config.isTimeIncluded;
+        dateFormat = config.format;
     }
 
     /**

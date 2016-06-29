@@ -1,3 +1,5 @@
+/* eslint-disable global-require, func-names, no-undefined, no-console */
+
 (function () {
     var toSassValue = require('./../src/to-sass-value')(),
         sass = require('node-sass'),
@@ -401,15 +403,32 @@
                 expect(obj.getLength()).toBe(6);
             });
 
-            it('should be able to convert Date objects to SassString', function () {
-                var sassDate1 = toSassValue(new Date('1995-03-02')),
-                    sassDate2 = toSassValue(new Date(1995, 2, 2, 1, 20, 0));
+            it('should be able to convert Date objects to SassMap', function () {
+                var utcDate = toSassValue(new Date('1995-03-02')),
+                    tzDate = toSassValue(new Date(1995, 2, 2, 1, 20, 42, 420)); // gets converted to UTC, in my case this is +8
 
-                expect(sassDate1 instanceof SassString).toBe(true);
-                expect(sassDate2 instanceof SassString).toBe(true);
+                expect(utcDate instanceof SassMap).toBe(true);
+                expect(tzDate instanceof SassMap).toBe(true);
 
-                expect(sassDate1.getValue()).toBe('1995-03-02');
-                expect(sassDate2.getValue()).toBe('1995-03-02');
+                expect(utcDate.getValue(3).getValue()).toBe(0); // millisecond
+                expect(utcDate.getValue(4).getValue()).toBe(0); // second
+                expect(utcDate.getValue(5).getValue()).toBe(0); // minute
+                expect(utcDate.getValue(6).getValue()).toBe(0); // hour
+                expect(utcDate.getValue(7).getValue()).toBe(4); // day
+                expect(utcDate.getValue(8).getValue()).toBe(2); // date
+                expect(utcDate.getValue(9).getValue()).toBe(9); // week
+                expect(utcDate.getValue(10).getValue()).toBe(3); // month
+                expect(utcDate.getValue(11).getValue()).toBe(1995); // year
+
+                expect(tzDate.getValue(3).getValue()).toBe(420); // millisecond
+                expect(tzDate.getValue(4).getValue()).toBe(42); // second
+                expect(tzDate.getValue(5).getValue()).toBe(20); // minute
+                expect(tzDate.getValue(6).getValue()).toBe(17); // hour
+                expect(tzDate.getValue(7).getValue()).toBe(3); // day
+                expect(tzDate.getValue(8).getValue()).toBe(1); // date
+                expect(tzDate.getValue(9).getValue()).toBe(9); // week
+                expect(tzDate.getValue(10).getValue()).toBe(3); // month
+                expect(tzDate.getValue(11).getValue()).toBe(1995); // year
             });
         });
     });
