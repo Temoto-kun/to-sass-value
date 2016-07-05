@@ -2,7 +2,7 @@
   "name": "@theoryofnekomata/to-sass-value",
   "version": "0.5.0",
   "description": "Converts a JavaScript value to its corresponding Sass value for use in https://github.com/sass/node-sass.",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "eslint --env jasmine,node spec/**/*.js && node test.js",
     "lint": "eslint --env es6,node src/**/*.js"

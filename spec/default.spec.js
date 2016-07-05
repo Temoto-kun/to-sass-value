@@ -1,7 +1,7 @@
 /* eslint-disable global-require, func-names, no-undefined, no-console */
 
 (function () {
-    var toSassValue = require('./../src/to-sass-value')(),
+    var toSassValue = require('./../src/index')(),
         sass = require('node-sass'),
 
         SassBoolean = sass.types.Boolean,
@@ -64,7 +64,7 @@
             });
 
             it('should be able to add Boolean strings on configuration', function () {
-                var toSassValue = require('./../src/to-sass-value')({
+                var toSassValue = require('./../src/index')({
                         boolean: {
                             booleans: {
                                 truthy: ['ja'],
@@ -302,7 +302,7 @@
             });
 
             it('should be able to add custom formats of colors', function () {
-                var toSassValue = require('./../src/to-sass-value')({
+                var toSassValue = require('./../src/index')({
                         color: {
                             channels: {
                                 r: ['rojo'],

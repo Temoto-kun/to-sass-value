@@ -6,12 +6,12 @@
  * @license MIT
  */
 
-var sass = require('node-sass'),
-    parseColor = require('parse-color'),
-    moment = require('moment');
-
 (function _toSassValue() {
-    var booleanStrings,
+    var sass = require('node-sass'),
+        parseColor = require('parse-color'),
+        moment = require('moment'),
+
+        booleanStrings,
         colorChannelStrings,
         dateFormat,
 
